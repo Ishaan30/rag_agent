@@ -1,0 +1,25 @@
+# Core API framework
+fastapi==0.111.0
+uvicorn==0.29.0
+
+# LangChain + Google Gemini
+langchain==0.2.6
+langchain-core==0.2.11
+langchain-community==0.2.6
+langchain-google-genai==1.0.6
+
+# Document loaders
+pypdf==4.2.0         # PDF parsing
+ # Optional: richer PDF extraction
+
+# Vector store
+faiss-cpu
+
+# Tools
+tavily-python==0.3.3  # Web search
+httpx==0.27.0         # HTTP client for weather tool
+
+# Utilities
+python-multipart==0.0.9   # File uploads in FastAPI
+pydantic==2.7.4
+python-dotenv==1.0.1
