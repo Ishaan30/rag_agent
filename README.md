@@ -1,6 +1,25 @@
 # RAG Chatbot
 
-A conversational AI chatbot with Retrieval-Augmented Generation (RAG), built with FastAPI, LangChain, and Google Gemini.
+A conversational AI chatbot with Retrieval-Augmented Generation (RAG) and agent capabilities, built with FastAPI, LangChain, and Google Gemini.
+
+## Features
+
+- **Streaming chat** with conversation memory per session
+- **Document Q&A** — upload a PDF or text file and ask questions about it
+- **Agent with tools** — the chatbot decides when to use:
+  - 🔍 **Web Search** (Tavily) — for current events and real-time information
+  - 🌤️ **Weather** (Open-Meteo, no API key needed) — for weather queries
+- **RAG pipeline** — chunks, embeds, and retrieves document context automatically
+
+## Technology Stack
+
+| Component | Choice | Reason |
+|---|---|---|
+| LLM | Google Gemini 2.5 Flash | Fast, capable, generous free tier |
+| Embeddings | Gemini REST API (`gemini-embedding-001`) | Used REST directly to avoid gRPC timeout issues on restricted networks |
+| Vector DB | FAISS | Zero setup, no persistence config, ideal for dev/demo |
+| Framework | FastAPI | Async support, easy SSE streaming |
+| Agent | LangChain AgentExecutor | Tool-calling agent with conversation history |
 
 ## Project Structure
 
@@ -35,8 +54,8 @@ rag-chatbot/
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/yourusername/rag-chatbot.git
-cd rag-chatbot
+git clone https://github.com/Ishaan30/rag_agent.git
+cd rag_agent
 ```
 
 **2. Create and activate a virtual environment**
@@ -85,6 +104,20 @@ curl -X POST http://localhost:8000/api/chat/message \
   -d '{"session_id": "abc123", "message": "Summarise the document"}'
 ```
 
+**Ask a weather question (triggers weather tool):**
+```bash
+curl -X POST http://localhost:8000/api/chat/message \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "abc123", "message": "What is the weather in London?"}'
+```
+
+**Ask a web search question (triggers search tool):**
+```bash
+curl -X POST http://localhost:8000/api/chat/message \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "abc123", "message": "What are the latest AI news?"}'
+```
+
 **Clear conversation:**
 ```bash
 curl -X DELETE http://localhost:8000/api/chat/abc123
@@ -97,8 +130,9 @@ curl http://localhost:8000/api/documents/status
 
 ## Design Decisions & Trade-offs
 
-- **FAISS over Chroma** — FAISS is in-memory, zero setup, no persistence config needed. Trade-off: vector store resets on server restart. Production would use a persistent store like Pinecone or Chroma with disk persistence.
+- **FAISS over Chroma** — FAISS is in-memory, zero setup, no persistence config needed. Trade-off: vector store resets on server restart. Production would use Pinecone or Chroma with disk persistence.
 - **Gemini REST embeddings** — Used `google-generativeai` directly instead of `langchain-google-genai` to bypass gRPC which caused timeout issues on restricted networks. Pure HTTPS calls are more firewall-friendly.
 - **In-memory session history** — Conversation history lives in a Python dict keyed by session ID. Simple and fast for demo purposes. Trade-off: history is lost on restart. Production would use Redis.
-- **Single active document** — Only one document can be active at a time. Uploading a new file replaces the previous vector store. Trade-off: simple but not multi-user friendly.
+- **Single active document** — Only one document can be active at a time. Uploading a new file replaces the previous vector store. Simple but not multi-user friendly.
 - **Single-file frontend** — The entire UI is one `index.html` with no build step, making it trivial to serve via FastAPI's `FileResponse`.
+- **Open-Meteo for weather** — No API key required, completely free, no rate limits for development use.
